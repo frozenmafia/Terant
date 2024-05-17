@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "../../Display"
+		},
+		{
+			"name": "TERENT",
+			"path": "../../TERENT"
+		},
+		{
+			"name": "TERANT",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"ros.distro": "humble"
+	}
+}

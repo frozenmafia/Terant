@@ -27,7 +27,7 @@ void PZEMMonitor::readAndPrintValues() {
   Serial.println();
 
   // Create an instance of the Axsecure class
-  Axsecure axsecure("your_server_ip_or_domain", 80); // Replace "your_server_ip_or_domain" with your server's IP address or domain name and port
+  Axsecure axsecure("http://192.168.137.21", 8000); // Replace "your_server_ip_or_domain" with your server's IP address or domain name and port
 
   // Example of sending data to the server
   String data = "Voltage: " + String(voltage) + "V\n" +
@@ -36,6 +36,15 @@ void PZEMMonitor::readAndPrintValues() {
                 "Energy: " + String(energy, 3) + "kWh\n" +
                 "Frequency: " + String(frequency, 1) + "Hz\n" +
                 "PF: " + String(pf);
+
+  String jsonData = "{";
+    jsonData += "\"Voltage\": \"" + String(voltage) + "V\",";
+    jsonData += "\"Current\": \"" + String(current) + "A\",";
+    jsonData += "\"Power\": \"" + String(power) + "W\",";
+    jsonData += "\"Energy\": \"" + String(energy, 3) + "kWh\",";
+    jsonData += "\"Frequency\": \"" + String(frequency, 1) + "Hz\",";
+    jsonData += "\"PF\": \"" + String(pf) + "\"";
+    jsonData += "}";
   
-  axsecure.sendData(data);
+  axsecure.sendData(jsonData,"receive_data");
 }
