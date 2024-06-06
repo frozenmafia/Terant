@@ -2,11 +2,16 @@
 #define WIFI_CONFIGURATOR_H
 
 #include <WiFiManager.h>
+#include "LCDDisplay.h"
 
 class WifiConfigurator {
 public:
-  void begin();
-  bool connect();
+    WifiConfigurator(LCDDisplay& lcd);
+    void begin();
+    bool connect();
+
+private:
+    LCDDisplay& lcd;
 };
 
 #endif
