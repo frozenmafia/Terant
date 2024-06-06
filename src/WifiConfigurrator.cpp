@@ -9,26 +9,57 @@ void WifiConfigurator::begin() {
     delay(3000);
     String msg = "\n Starting";
     Serial.println(msg);
-    // lcd.displayText(msg, 0, 0);
-    connect();
+    connect(true);
 }
 
-bool WifiConfigurator::connect() {
+bool WifiConfigurator::connect(bool confPort) {
     WiFiManager wm;
-    // lcd.displayText("Connecting to", 0, 0);
-    // lcd.displayText("WiFi...", 1, 0);
+    
+    // Reset WiFiManager settings to forget any saved WiFi credentials
+
+    if(!confPort)
+        wm.resetSettings();
+
+    // Enable configuration portal to start AP mode
+    wm.setEnableConfigPortal(confPort);
+    
+    // Attempt to connect to the configured network
+    bool res = wm.autoConnect("AutoConnectAP", "password");
+    
+    // Check connection result
+    if (!res) {
+        String msg = "Failed to connect";
+        Serial.println(msg);
+        lcd.displayWiFiStatus(true);
+    } else {
+        String msg = "Connected to WiFi!";
+        Serial.println(msg);
+        lcd.displayWiFiStatus(false);
+    }
+
+    delay(1000); // Short delay to show the connection status
+    return res;
+}
+
+
+bool WifiConfigurator::retry() {
+    WiFiManager wm;
+    wm.setConnectTimeout(180);
+    wm.setConnectRetries(100);
+    if (wm.getWiFiIsSaved()) wm.setEnableConfigPortal(false);
     bool res = wm.autoConnect("AutoConnectAP", "password");
     if (!res) {
         String msg = "Failed to connect";
         Serial.println(msg);
         lcd.displayWiFiStatus(true);
-        // lcd.displayText(msg, 0, 0);
+        delay(1000); // Short delay to show the connection status
+        return false;
     } else {
         String msg = "Connected to WiFi!";
         Serial.println(msg);
         lcd.displayWiFiStatus(false);
-        // lcd.displayText(msg, 0, 0);
+        delay(1000); // Short delay to show the connection status
+        return true;
     }
-    delay(3000); // Short delay to show the connection status
-    return res;
+    
 }

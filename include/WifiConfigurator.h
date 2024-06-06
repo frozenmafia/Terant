@@ -8,7 +8,8 @@ class WifiConfigurator {
 public:
     WifiConfigurator(LCDDisplay& lcd);
     void begin();
-    bool connect();
+    bool connect(bool confPort);
+    bool retry();
 
 private:
     LCDDisplay& lcd;

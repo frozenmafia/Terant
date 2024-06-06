@@ -41,7 +41,7 @@ void LCDDisplay::displayReset(){
 void LCDDisplay::displayTitle(const String &title) {
     // Clear the area where the title will be displayed
     lcd.setCursor(0, 0); // Set cursor to the starting position
-    for (uint8_t i = 0; i < 14; i++) {
+    for (uint8_t i = 0; i < 5; i++) {
         lcd.print(" "); // Print spaces to clear the area
     }
 
@@ -51,14 +51,18 @@ void LCDDisplay::displayTitle(const String &title) {
 }
 
 void LCDDisplay::displayReadings(const String &readings) {
-    // Extract the first reading and display it at position (0, 10)
-    String firstReading = readings.substring(0, 3);
-    lcd.setCursor(10, 0);
+    // Extract the first reading and display it at position (0, 6)
+    String firstReading = readings.substring(0, 9);
+    lcd.setCursor(4, 0);
     lcd.print(firstReading);
 
     // Extract the remaining readings and display them on the second row
-    String remainingReadings = readings.substring(4);
+    String remainingReadings = readings.substring(9);
     lcd.setCursor(0, 1); // Move to position (5, 1) for the second reading
+    for (uint8_t i = 0; i < 16; i++) {
+        lcd.print(" "); // Print spaces to clear the area
+    }
+    lcd.setCursor(0, 1);
     lcd.print(remainingReadings);
 }
 
