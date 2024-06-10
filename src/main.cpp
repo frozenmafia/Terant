@@ -1,9 +1,11 @@
 #include <Arduino.h>
+#include <TimeLib.h> // Include TimeLib library for time calculations
 #include "ButtonHandler.h"
 #include "WifiConfigurator.h"
 #include "PZEMMonitor.h"
 #include <SPIFFS.h>
 #include "LCDDisplay.h"
+#include <Axsecure.h>
 
 #define TRIGGER_PIN 0
 #define PZEM_RX_PIN 16
@@ -20,18 +22,20 @@ PZEMMonitor pzemMonitor(PZEM_RX_PIN, PZEM_TX_PIN, Serial2, lcdDisplay);
 void handleESP32(void *pvParameters) {
     for (;;) {
         if (WiFi.status() != WL_CONNECTED) {
-            // lcdDisplay.displayWiFiStatus(false);
-            if(wifiConfigurator.retry()){
-                pzemMonitor.sendDataAndClear();
+            if (wifiConfigurator.retry()) {
+                    pzemMonitor.logValues();
+                    delay(100);
+                    pzemMonitor.sendDataAndClear();
             }
             delay(2000); // Short delay to show the connection status
         }
 
-        if(buttonHandler.isButtonPressed()){
-            if(wifiConfigurator.connect(false)){
-                pzemMonitor.sendDataAndClear();
+        if (buttonHandler.isButtonPressed()) {
+            if (wifiConfigurator.connect(false)) {
+                    pzemMonitor.logValues();
+                    delay(100);
+                    pzemMonitor.sendDataAndClear();
             }
-
         }
         vTaskDelay(10 / portTICK_PERIOD_MS); // Small delay to yield control
     }
@@ -39,36 +43,25 @@ void handleESP32(void *pvParameters) {
 
 void displayReadings(void *pvParameters) {
     unsigned long lastLogTime = 0;
-    unsigned long lastReadTime = 0;
-    const unsigned long LogInterval = 10000; // 10 seconds
-    const unsigned long ReadInterval = 2000; // 2 seconds
-    const int MaxLogsBeforeSend = 12; // Maximum logs before sending to the server
+    const unsigned long LogInterval = 1; // 1 hour in seconds
+    const int MaxLogsBeforeSend = 1;
     int logCount = 0;
-    int readCount = 0;
-
 
     for (;;) {
         lcdDisplay.displayWiFiStatus(WiFi.status() == WL_CONNECTED);
-        unsigned long currentMillis = millis();
+        time_t currentTime = now(); // Get current time using TimeLib
 
-        // Check if it's time to log data
-        if (currentMillis - lastLogTime >= ReadInterval) {
-            lastLogTime = currentMillis;
-            // Log the PZEM values to the file
-            pzemMonitor.readAndPrintValues();
+        pzemMonitor.readAndPrintValues();
 
-            readCount++;
-            if(readCount>=1800){
-                pzemMonitor.logValues();
-                logCount++;
-                if (logCount >= MaxLogsBeforeSend) {
-                    pzemMonitor.sendDataAndClear();
-                    logCount = 0;
-                }
+        if (currentTime - lastLogTime >= LogInterval) {
+            lastLogTime = currentTime;
+            pzemMonitor.logValues();
+            logCount++;
+            if (logCount >= MaxLogsBeforeSend) {
+                pzemMonitor.sendDataAndClear();
+                logCount = 0;
             }
         }
-
-        // Check if it's time to read and display PZEM value
 
         vTaskDelay(10 / portTICK_PERIOD_MS); // Small delay to yield control
     }
@@ -77,24 +70,22 @@ void displayReadings(void *pvParameters) {
 void setup() {
     Serial.begin(115200);
     lcdDisplay.begin();
-       if (!SPIFFS.begin(true)) {
+    if (!SPIFFS.begin(true)) {
         Serial.println("Failed to initialize SPIFFS");
         return;
-    }else{
+    } else {
         Serial.println("Initialized");
     }
     lcdDisplay.displayText("Terant...", 0, 0);
     wifiConfigurator.begin();
-    // lcdDisplay.clear();
 
-    if (!SPIFFS.exists("/pzem_readings.txt")) {
-        Serial.println("File not found");
-        // return;
-    }else{
+    if (WiFi.status() == WL_CONNECTED) {
+
+        pzemMonitor.logValues();
+        delay(100);
         pzemMonitor.sendDataAndClear();
     }
-    
-    // Create tasks
+
     xTaskCreatePinnedToCore(
         handleESP32,    /* Task function */
         "HandleESP32",  /* Name of the task */
